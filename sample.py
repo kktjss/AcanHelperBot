@@ -2,6 +2,7 @@ import os
 import time
 import asyncio
 import requests
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command
 from aiogram.types import Message
@@ -65,7 +66,7 @@ async def generate_code(message: Message):
             await asyncio.sleep(2)  
 
         answer = data["response"]["alternatives"][0]["message"]["text"]
-        await message.answer(f"```\n{answer}\n```")
+        await message.answer(f"\n{answer}\n")
 
     except requests.RequestException as e:
         await message.answer(f"Ошибка при запросе к API: {str(e)}")
