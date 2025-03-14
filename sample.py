@@ -7,15 +7,11 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from dotenv import load_dotenv
 
-#пууорадлоаоплдывд
-
-# Load environment variables
 load_dotenv()
 BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 YANDEX_FOLDER_ID = os.getenv("YANDEX_FOLDER_ID")
 YANDEX_API_KEY = os.getenv("YANDEX_API_KEY")
 
-# Check if required environment variables are set
 if not all([BOT_TOKEN, YANDEX_FOLDER_ID, YANDEX_API_KEY]):
     raise ValueError("Missing required environment variables")
 
@@ -59,7 +55,6 @@ async def generate_code(message: Message):
         response.raise_for_status()
         operation_id = response.json().get("id")
 
-        # Check operation status
         status_url = f"https://llm.api.cloud.yandex.net:443/operations/{operation_id}"
         while True:
             response = requests.get(status_url, headers=headers)
@@ -67,9 +62,8 @@ async def generate_code(message: Message):
             data = response.json()
             if data.get("done"):
                 break
-            await asyncio.sleep(2)  # Use asyncio.sleep instead of time.sleep
+            await asyncio.sleep(2)  
 
-        # Get and send the result
         answer = data["response"]["alternatives"][0]["message"]["text"]
         await message.answer(f"```\n{answer}\n```")
 
@@ -84,11 +78,10 @@ async def main():
     bot = Bot(token=BOT_TOKEN)
     dp = Dispatcher()
 
-    # Register handlers
     dp.message.register(send_welcome, Command("start"))
     dp.message.register(
         generate_code, F.text, ~Command("start")
-    )  # Handle all messages except /start
+    ) 
 
     try:
         await dp.start_polling(bot)
