@@ -32,10 +32,9 @@ async def send_welcome(message: types.Message):
 # Обработчик нажатия на кнопку "Начать урок"
 async def start_lesson(callback_query: types.CallbackQuery):
     await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.from_user.id, "Включение VR...")
-    
-    # Здесь можно добавить логику для обработки текста и/или фото
-    # Например, запросить у пользователя текст или фото
+    await bot.send_message(callback_query.from_user.id, "Включение AR...")
+
+    # Здесь происходит взаимодействие с AR
     await bot.send_message(callback_query.from_user.id, "Пожалуйста, отправьте текст или фото для обработки.")
 
     # В конце урока выводим результат ученика
