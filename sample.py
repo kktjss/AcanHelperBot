@@ -7,7 +7,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 from dotenv import load_dotenv
 
-#пууорадло
+#пууорадлоаоплдывд
 
 # Load environment variables
 load_dotenv()
