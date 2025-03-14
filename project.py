@@ -24,9 +24,9 @@ dp = Dispatcher()
 # Обработчик команды /start
 async def send_welcome(message: types.Message):
     keyboard = InlineKeyboardMarkup(inline_keyboard=[], row_width=2)
-    start_lesson_button = InlineKeyboardButton(text="Начать урок", callback_data="start_lesson")
+    #start_lesson_button = InlineKeyboardButton(text="Начать урок", callback_data="start_lesson")
     ai_assistant_button = InlineKeyboardButton(text="ИИ-ассистент", callback_data="ai_assistant")
-    keyboard.inline_keyboard.append([start_lesson_button, ai_assistant_button])
+    keyboard.inline_keyboard.append([ai_assistant_button]) #start_lesson_button
     await message.answer("Выберите действие:", reply_markup=keyboard)
 
 # Обработчик нажатия на кнопку "Начать урок"
@@ -44,54 +44,56 @@ async def start_lesson(callback_query: types.CallbackQuery):
 # Обработчик нажатия на кнопку "ИИ-ассистент"
 async def ai_assistant(callback_query: types.CallbackQuery, state: FSMContext):
     await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.from_user.id, "Вы выбрали ИИ-ассистента. Здесь будет функционал ассистента.")
+    await bot.send_message(callback_query.from_user.id, "Вы выбрали ИИ-ассистента. Пожалуйста, задайте вопрос по теме урока.")
     await state.set_state(AIAssistantState.waiting_for_ai_input)
 
 async def handle_ai_input(message: types.Message, state: FSMContext):
     user_prompt = message.text
     print(user_prompt)
     try:
-        gpt_model = "yandexgpt-lite"
-        system_prompt = "Ты ассистент учителя физики. Ты объясняешь школьникам школную программу по физике."
-        body = {
-            "modelUri": f"gpt://{YANDEX_FOLDER_ID}/{gpt_model}",
-            "completionOptions": {
-                "stream": False,
-                "temperature": 0.3,
-                "maxTokens": 2000,
-            },
-            "messages": [
-                {"role": "system", "text": system_prompt},
-                {"role": "user", "text": user_prompt},
-            ],
-        }
+        is_exit = False
+        while not is_exit:
+            gpt_model = "yandexgpt-lite"
+            system_prompt = "Ты ассистент учителя физики. Дай пояснения по теме, которую тебе пришлет ученик"
+            body = {
+                "modelUri": f"gpt://{YANDEX_FOLDER_ID}/{gpt_model}",
+                "completionOptions": {
+                    "stream": False,
+                    "temperature": 0.3,
+                    "maxTokens": 2000,
+                },
+                "messages": [
+                    {"role": "system", "text": system_prompt},
+                    {"role": "user", "text": user_prompt},
+                ],
+            }
 
-        url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completionAsync"
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Api-Key {YANDEX_API_KEY}",
-        }
+            url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completionAsync"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Api-Key {YANDEX_API_KEY}",
+            }
 
-        # Send async request
-        response = requests.post(url, headers=headers, json=body)
-        response.raise_for_status()
-        operation_id = response.json().get("id")
-
-        status_url = f"https://llm.api.cloud.yandex.net:443/operations/{operation_id}"
-        while True:
-            response = requests.get(status_url, headers=headers)
+            # Send async request
+            response = requests.post(url, headers=headers, json=body)
             response.raise_for_status()
-            data = response.json()
-            if data.get("done"):
-                break
-            await asyncio.sleep(2) 
+            operation_id = response.json().get("id")
 
-        answer = data["response"]["alternatives"][0]["message"]["text"]
-        await message.answer(f"\n{answer}\n")
-        print(answer)
-        await state.clear()
-    except requests.RequestException as e:
-        await message.answer(f"Ошибка при запросе к API: {str(e)}")
+            status_url = f"https://llm.api.cloud.yandex.net:443/operations/{operation_id}"
+            while True:
+                response = requests.get(status_url, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+                if data.get("done"):
+                    break
+                await asyncio.sleep(2) 
+
+            answer = data["response"]["alternatives"][0]["message"]["text"]
+            await message.answer(f"\n{answer}\n")
+            print(answer)
+            await state.clear()
+    # except requests.RequestException as e:
+    #     await message.answer(f"Ошибка при запросе к API: {str(e)}")
     except Exception as e:
         await message.answer(f"Произошла ошибка: {str(e)}")
 
