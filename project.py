@@ -49,6 +49,7 @@ async def ai_assistant(callback_query: types.CallbackQuery, state: FSMContext):
 
 async def handle_ai_input(message: types.Message, state: FSMContext):
     user_prompt = message.text
+    print(user_prompt)
     try:
         gpt_model = "yandexgpt-lite"
         system_prompt = "Ты ассистент учителя физики. Ты объясняешь школьникам школную программу по физике."
@@ -83,7 +84,7 @@ async def handle_ai_input(message: types.Message, state: FSMContext):
             data = response.json()
             if data.get("done"):
                 break
-            await asyncio.sleep(2)  
+            await asyncio.sleep(2) 
 
         answer = data["response"]["alternatives"][0]["message"]["text"]
         await message.answer(f"\n{answer}\n")
@@ -97,9 +98,10 @@ async def handle_ai_input(message: types.Message, state: FSMContext):
 dp.message.register(send_welcome, Command("start"))
 dp.callback_query.register(start_lesson, F.data == "start_lesson")
 dp.callback_query.register(ai_assistant, F.data == "ai_assistant")
-dp.message.register(handle_ai_input, F.state == AIAssistantState.waiting_for_ai_input)
+dp.message.register(handle_ai_input, AIAssistantState.waiting_for_ai_input)
 
 async def main():
+
     await dp.start_polling(bot)
 
 
